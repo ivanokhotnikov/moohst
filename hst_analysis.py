@@ -572,11 +572,22 @@ def plot_validation(show_figure=False, save_figure=False, format='pdf'):
     eff_min = benchmark.compute_eff(speed_pump=1780,
                                     pressure_discharge=207,
                                     pressure_charge=14,
+                                    h1=29e-6,
+                                    h2=29e-6,
                                     h3=rad_clearance_max)[0]
     eff_max = benchmark.compute_eff(speed_pump=1780,
                                     pressure_discharge=207,
                                     pressure_charge=14,
+                                    h1=29e-6,
+                                    h2=29e-6,
                                     h3=rad_clearance_min)[0]
+    eff_midrange = benchmark.compute_eff(speed_pump=1780,
+                                         pressure_discharge=207,
+                                         pressure_charge=14,
+                                         h1=29e-6,
+                                         h2=29e-6,
+                                         h3=np.mean((rad_clearance_min,
+                                                     rad_clearance_max)))[0]
     sns.set_style('ticks', {
         'spines.linewidth': .25,
     })
@@ -593,7 +604,7 @@ def plot_validation(show_figure=False, save_figure=False, format='pdf'):
         eff_max['hst']['volumetric'],
         label=
         f"Prediction at min clearance, {round(eff_max['hst']['volumetric'], 2)}%",
-        linestyle='--',
+        linestyle=':',
         color='crimson',
         linewidth=1,
     )
@@ -601,8 +612,16 @@ def plot_validation(show_figure=False, save_figure=False, format='pdf'):
         eff_min['hst']['volumetric'],
         label=
         f"Prediction at max clearance, {round(eff_min['hst']['volumetric'], 2)}%",
-        linestyle='--',
+        linestyle=':',
         color='seagreen',
+        linewidth=1,
+    )
+    plot.axes.axvline(
+        eff_midrange['hst']['volumetric'],
+        label=
+        f"Prediction at midrange clearance, {round(eff_midrange['hst']['volumetric'], 2)}%",
+        linestyle=':',
+        color='royalblue',
         linewidth=1,
     )
     plot.axes.axvline(
@@ -626,7 +645,7 @@ def plot_validation(show_figure=False, save_figure=False, format='pdf'):
         linestyle='--',
         linewidth=1,
     )
-    plt.xlim(84, 95)
+    plt.xlim(85, 93)
     plt.xlabel('HST volumetric efficiency, %')
     plt.legend(loc='upper right', fontsize='x-small')
     if save_figure:

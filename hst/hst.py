@@ -453,7 +453,8 @@ class HST:
                       (6 * self.oil_data.loc[self.oil_temp]['Dyn. Viscosity'] *
                        1e-3 * np.log(self.sizes['Rs'] / self.sizes['rs'])))
         leak_piston = np.array([
-            self.pistons * np.pi * self.sizes['d'] * h3**3 * 0.5 *
+            # self.pistons *\
+            np.pi * self.sizes['d'] * h3**3 * 0.5 *
             (pressure_discharge * 1e5 + pressure_charge * 1e5) *
             (1 + 1.5 * eccentricity**3) *
             (1 / (self.sizes['eng'] +
@@ -541,6 +542,12 @@ class HST:
                 'mechanical': mech_hst,
                 'total': total_hst
             }
+        }
+        self.leakages = {
+            'pistons': leak_pistons,
+            'shoes': leak_shoes,
+            'block': leak_block,
+            'total': leak_total,
         }
         return self.efficiencies, self.performance
 
