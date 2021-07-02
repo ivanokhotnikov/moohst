@@ -2,12 +2,13 @@ import os
 import requests
 import numpy as np
 import pandas as pd
-import lxml.html as lh
+import defusedxml.html as lh
 import seaborn as sns
 import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 from sklearn.linear_model import LinearRegression
 from scipy.interpolate import make_interp_spline
+
 
 class HST:
     """Creates the HST object.
@@ -111,22 +112,20 @@ class HST:
         })
         sns.set_palette('Set1', n_colors=3)
         fig, ax = plt.subplots()
+        ax.set_title(f'Physical properties of {self.oil}')
         ax2 = ax.twinx()
         ax3 = ax.twinx()
 
         ax.set_xlabel('Oil temperature, degrees C')
         ax.set_ylabel('Density, kg/cub.m')
-        ax.set_ylim(820, 900)
 
         ax2.set_ylabel('Kinematic viscosity, cSt')
-        ax2.set_ylim(0, 1600)
         ax2.spines['left'].set_position(('axes', -0.3))
         ax2.spines['left'].set_visible(True)
         ax2.yaxis.set_label_position('left')
         ax2.yaxis.set_ticks_position('left')
 
         ax3.set_ylabel('Dynamic viscosity, mPa s')
-        ax3.set_ylim(0, 1600)
         ax3.spines['left'].set_position(('axes', -0.15))
         ax3.spines['left'].set_visible(True)
         ax3.yaxis.set_label_position('left')
@@ -182,7 +181,7 @@ class HST:
         if save_figure:
             if not os.path.exists('images'): os.mkdir('images')
             plt.savefig(
-                f'images/oil.{format}',
+                f'images/oil_{self.oil[4:]}.{format}',
                 bbox_inches='tight',
                 orientation='landscape',
                 pad_inches=.1,
@@ -227,7 +226,7 @@ class HST:
                         name='Density, kg/cub.m',
                         line=dict(width=1, color='orange'))
         fig.update_layout(
-            # title=f'Viscosity and density of {self.oil}',
+            title=f'Viscosity and density of {self.oil}',
             width=800,
             height=500,
             xaxis=dict(
@@ -240,15 +239,16 @@ class HST:
                 linewidth=0.25,
                 range=[min(self.oil_data.index),
                        max(self.oil_data.index)]),
-            yaxis=dict(title='Viscosity',
-                       showline=True,
-                       linecolor='black',
-                       mirror=True,
-                       showgrid=True,
-                       gridcolor='LightGray',
-                       gridwidth=0.25,
-                       linewidth=0.25,
-                       range=[0, 1500]),
+            yaxis=dict(
+                title='Viscosity',
+                showline=True,
+                linecolor='black',
+                mirror=True,
+                showgrid=True,
+                gridcolor='LightGray',
+                gridwidth=0.25,
+                linewidth=0.25,
+            ),
             yaxis2=dict(
                 title='Density',
                 linecolor='black',
@@ -268,7 +268,7 @@ class HST:
         if save_figure:
             if not os.path.exists('images'):
                 os.mkdir('images')
-            fig.write_image(f'images/oil.{format}')
+            fig.write_image(f'images/oil_{self.oil[4:}.{format}')
         if show_figure:
             fig.show()
 
