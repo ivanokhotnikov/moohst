@@ -2,7 +2,6 @@ import os
 import requests
 import numpy as np
 import pandas as pd
-import defusedxml.html as lh
 import seaborn as sns
 import matplotlib.pyplot as plt
 import plotly.graph_objects as go
@@ -57,48 +56,49 @@ class HST:
             f'https://raw.githubusercontent.com/ivanokhotnikov/effmap/master/oils/SAE%20{self.oil[4:]}.csv',
             index_col=0)
 
-    def import_oils(self):
-        """Imports oil data from https://wiki.anton-paar.com/uk-en/engine-oil/. Saves the oil viscosity and density table to the class attribute self.oil_data according to the predefined HST oil type self.oil.
-        """
-        if not os.path.exists('.\oils'):
-            os.mkdir('oils')
-        if f'{self.oil}.csv' in os.listdir('.\oils'):
-            self.oil_data = pd.read_csv(f'.\oils\{self.oil}.csv', index_col=0)
-        else:
-            url = 'https://wiki.anton-paar.com/uk-en/engine-oil/'
-            page = requests.get(url)
-            doc = lh.fromstring(page.content)
-            data = doc.xpath('//tr')
-            oils = [
-                i.text_content().rstrip().lstrip().replace('-', '')
-                for i in doc.xpath('//h3')[:-2]
-            ]
-            col = []
+    # def import_oils(self):
+    #     """Imports oil data from https://wiki.anton-paar.com/uk-en/engine-oil/. Saves the oil viscosity and density table to the class attribute self.oil_data according to the predefined HST oil type self.oil.
+    #     """
+    #     import defusedxml.html as lh
+    #     if not os.path.exists('.\oils'):
+    #         os.mkdir('oils')
+    #     if f'{self.oil}.csv' in os.listdir('.\oils'):
+    #         self.oil_data = pd.read_csv(f'.\oils\{self.oil}.csv', index_col=0)
+    #     else:
+    #         url = 'https://wiki.anton-paar.com/uk-en/engine-oil/'
+    #         page = requests.get(url)
+    #         doc = lh.fromstring(page.content)
+    #         data = doc.xpath('//tr')
+    #         oils = [
+    #             i.text_content().rstrip().lstrip().replace('-', '')
+    #             for i in doc.xpath('//h3')[:-2]
+    #         ]
+    #         col = []
 
-            for t in data[0]:
-                name = t.text_content().rstrip().lstrip()
-                name = name[:name.rfind(' ')]
-                col.append((name, []))
+    #         for t in data[0]:
+    #             name = t.text_content().rstrip().lstrip()
+    #             name = name[:name.rfind(' ')]
+    #             col.append((name, []))
 
-            for j in data[1:]:
-                i = 0
-                for t in j.iterchildren():
-                    local_data = t.text_content().lstrip().rstrip()
-                    try:
-                        local_data = int(local_data) if i == 0 else float(
-                            local_data)
-                    except:
-                        continue
-                    col[i][1].append(local_data)
-                    i += 1
+    #         for j in data[1:]:
+    #             i = 0
+    #             for t in j.iterchildren():
+    #                 local_data = t.text_content().lstrip().rstrip()
+    #                 try:
+    #                     local_data = int(local_data) if i == 0 else float(
+    #                         local_data)
+    #                 except:
+    #                     continue
+    #                 col[i][1].append(local_data)
+    #                 i += 1
 
-            df = pd.DataFrame(
-                {(oil, title): column[i * 11:i * 11 + 11]
-                 for i, oil in enumerate(oils) for (title, column) in col[1:]},
-                index=col[0][1][:11])
-            df.index.name = index_name = col[0][0]
-            df[self.oil].to_csv(os.path.join('oils', f'{self.oil}.csv'))
-            self.oil_data = df[self.oil]
+    #         df = pd.DataFrame(
+    #             {(oil, title): column[i * 11:i * 11 + 11]
+    #              for i, oil in enumerate(oils) for (title, column) in col[1:]},
+    #             index=col[0][1][:11])
+    #         df.index.name = index_name = col[0][0]
+    #         df[self.oil].to_csv(os.path.join('oils', f'{self.oil}.csv'))
+    #         self.oil_data = df[self.oil]
 
     def plot_oil(self, show_figure=True, save_figure=False, format='pdf'):
         temp = self.oil_data.index
@@ -179,14 +179,16 @@ class HST:
             bbox_to_anchor=(.9, .9),
         )
         if save_figure:
-            if not os.path.exists('images'): os.mkdir('images')
+            if not os.path.exists('images'):
+                os.mkdir('images')
             plt.savefig(
                 f'images/oil_{self.oil[4:]}.{format}',
                 bbox_inches='tight',
                 orientation='landscape',
                 pad_inches=.1,
             )
-        if show_figure: plt.show()
+        if show_figure:
+            plt.show()
         plt.clf()
         plt.close('all')
 
@@ -225,50 +227,50 @@ class HST:
                         yaxis='y2',
                         name='Density, kg/cub.m',
                         line=dict(width=1, color='orange'))
-        fig.update_layout(
-            title=f'Viscosity and density of {self.oil}',
-            width=800,
-            height=500,
-            xaxis=dict(
-                title='Oil temperature, degrees',
-                showline=True,
-                linecolor='black',
-                showgrid=True,
-                gridcolor='LightGray',
-                gridwidth=0.25,
-                linewidth=0.25,
-                range=[min(self.oil_data.index),
-                       max(self.oil_data.index)]),
-            yaxis=dict(
-                title='Viscosity',
-                showline=True,
-                linecolor='black',
-                mirror=True,
-                showgrid=True,
-                gridcolor='LightGray',
-                gridwidth=0.25,
-                linewidth=0.25,
-            ),
-            yaxis2=dict(
-                title='Density',
-                linecolor='black',
-                mirror=True,
-                linewidth=0.5,
-                overlaying='y',
-                side='right',
-            ),
-            plot_bgcolor='rgba(255,255,255,1)',
-            paper_bgcolor='rgba(255,255,255,0)',
-            showlegend=True,
-            legend_orientation='h',
-            legend=dict(x=0, y=-.2),
-            font=dict(size=14, color='black'))
+        fig.update_layout(title=f'Viscosity and density of {self.oil}',
+                          width=800,
+                          height=500,
+                          xaxis=dict(title='Oil temperature, degrees',
+                                     showline=True,
+                                     linecolor='black',
+                                     showgrid=True,
+                                     gridcolor='LightGray',
+                                     gridwidth=0.25,
+                                     linewidth=0.25,
+                                     range=[
+                                         min(self.oil_data.index),
+                                         max(self.oil_data.index)
+                                     ]),
+                          yaxis=dict(
+                              title='Viscosity',
+                              showline=True,
+                              linecolor='black',
+                              mirror=True,
+                              showgrid=True,
+                              gridcolor='LightGray',
+                              gridwidth=0.25,
+                              linewidth=0.25,
+                          ),
+                          yaxis2=dict(
+                              title='Density',
+                              linecolor='black',
+                              mirror=True,
+                              linewidth=0.5,
+                              overlaying='y',
+                              side='right',
+                          ),
+                          plot_bgcolor='rgba(255,255,255,1)',
+                          paper_bgcolor='rgba(255,255,255,0)',
+                          showlegend=True,
+                          legend_orientation='h',
+                          legend=dict(x=0, y=-.2),
+                          font=dict(size=14, color='black'))
         fig.update_xaxes(mirror='all', )
         fig.update_yaxes(mirror='all', )
         if save_figure:
             if not os.path.exists('images'):
                 os.mkdir('images')
-            fig.write_image(f'images/oil_{self.oil[4:}.{format}')
+            fig.write_image(f'images/oil_{self.oil[4:]}.{format}')
         if show_figure:
             fig.show()
 
@@ -414,9 +416,9 @@ class HST:
                     Cp=.001,
                     Cm=.005,
                     D=125,
-                    h1=15e-6,
-                    h2=15e-6,
-                    h3=25e-6,
+                    h1=20e-6,
+                    h2=20e-6,
+                    h3=20e-6,
                     eccentricity=1):
         """Defines efficiencies and performance characteristics of the HST made of same-displacement axial-piston machines.
 
@@ -443,20 +445,24 @@ class HST:
             'motor': {'volumetric': float, 'mechanical': float, 'total': float},
             'hst': {'volumetric': float, 'mechanical': float, 'total': float}}
         """
-        leak_block = np.pi * h1**3 * 0.5 * (
-            pressure_discharge * 1e5 + pressure_charge * 1e5
+        leak_block = np.pi * h1**3 * (
+            (pressure_discharge * 1e5 * np.ceil(self.pistons / 2) +
+             pressure_charge * 1e5 * np.floor(self.pistons / 2)) / self.pistons
         ) * (1 / np.log(self.sizes['Rbo'] / self.sizes['rbo']) +
              1 / np.log(self.sizes['Rbi'] / self.sizes['rbi'])) / (
                  6 * self.oil_data.loc[self.oil_temp]['Dyn. Viscosity'] * 1e-3)
-        leak_shoes = (self.pistons * np.pi * h2**3 * 0.5 *
-                      (pressure_discharge * 1e5 + pressure_charge * 1e5) /
+        leak_shoes = (self.pistons * np.pi * h2**3 *
+                      ((pressure_discharge * 1e5 * np.ceil(self.pistons / 2) +
+                        pressure_charge * 1e5 * np.floor(self.pistons / 2)) /
+                       self.pistons) /
                       (6 * self.oil_data.loc[self.oil_temp]['Dyn. Viscosity'] *
                        1e-3 * np.log(self.sizes['Rs'] / self.sizes['rs'])))
         leak_piston = np.array([
             # self.pistons *\
-            np.pi * self.sizes['d'] * h3**3 * 0.5 *
-            (pressure_discharge * 1e5 + pressure_charge * 1e5) *
-            (1 + 1.5 * eccentricity**3) *
+            np.pi * self.sizes['d'] * h3**3 *
+            ((pressure_discharge * 1e5 * np.ceil(self.pistons / 2) +
+              pressure_charge * 1e5 * np.floor(self.pistons / 2)) /
+             self.pistons) * (1 + 1.5 * eccentricity**3) *
             (1 / (self.sizes['eng'] +
                   self.sizes['h'] * np.sin(np.pi * (ii) / self.pistons))) /
             (12 * self.oil_data.loc[self.oil_temp]['Dyn. Viscosity'] * 1e-3)
@@ -626,14 +632,16 @@ class HST:
         plt.xlabel('HST input speed, rpm')
         plt.ylabel('HST discharge pressure, bar')
         if save_figure:
-            if not os.path.exists('images'): os.mkdir('images')
+            if not os.path.exists('images'):
+                os.mkdir('images')
             plt.savefig(
                 f'images/pow_map_{self.displ}.{format}',
                 bbox_inches='tight',
                 orientation='landscape',
                 pad_inches=.1,
             )
-        if show_figure: plt.show()
+        if show_figure:
+            plt.show()
         plt.clf()
         plt.close('all')
 
@@ -705,9 +713,11 @@ class HST:
             # legend=dict(x=0, y=-.2),
             font=dict(size=14, color='black'))
         if save_figure:
-            if not os.path.exists('images'): os.mkdir('images')
+            if not os.path.exists('images'):
+                os.mkdir('images')
             fig.write_image(f'images/pow_map_{self.displ}.{format}')
-        if show_figure: fig.show()
+        if show_figure:
+            fig.show()
 
     def plot_eff_map(self,
                      max_speed_pump,
@@ -775,14 +785,16 @@ class HST:
             framealpha=.7,
         )
         if save_figure:
-            if not os.path.exists('images'): os.mkdir('images')
+            if not os.path.exists('images'):
+                os.mkdir('images')
             plt.savefig(
                 f'images/eff_map_{self.displ}.{format}',
                 bbox_inches='tight',
                 orientation='landscape',
                 pad_inches=.1,
             )
-        if show_figure: plt.show()
+        if show_figure:
+            plt.show()
         plt.clf()
         plt.close('all')
 
@@ -1002,15 +1014,17 @@ class HST:
                     yaxis='y1',
                 )
         if save_figure:
-            if not os.path.exists('images'): os.mkdir('images')
+            if not os.path.exists('images'):
+                os.mkdir('images')
             fig.write_image(f'images/eff_map_{self.displ}.{format}')
-        if show_figure: fig.show()
+        if show_figure:
+            fig.show()
 
 
 if __name__ == '__main__':
     hst = HST()
     hst.compute_sizes(displ=500)
-    #*  Oil setting
+    # *  Oil setting
     hst.oil = 'SAE 15W40'
     hst.oil_temp = 100
     hst.load_oil()
