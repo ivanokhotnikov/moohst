@@ -552,6 +552,13 @@ def plot_validation(show_figure=False, save_figure=False, format='pdf'):
     data.dropna(
         subset=['Forward Speed', 'Reverse Speed', 'Volumetric at 1780RPM'],
         inplace=True)
+    data['Reverse Speed'] = data['Reverse Speed'].astype(np.float64)
+    data['Volumetric at 1780RPM'] = data['Volumetric at 1780RPM'].map(
+    lambda x: float(x[:-1]))
+    data.loc[data['Reverse Speed'] == 568.0, 'Reverse Speed'] = 1568.0
+    data.loc[data['Volumetric at 1780RPM'] == 60.1,
+         'Volumetric at 1780RPM'] = round(
+            (1571 / 1780 + 1568 / 1780) / 2 * 100, ndigits=1)
     speeds = data[['Forward Speed', 'Reverse Speed']].astype(float)
     speeds = speeds.stack()
     vol_eff = speeds / 1780 * 1e2
@@ -645,7 +652,8 @@ def plot_validation(show_figure=False, save_figure=False, format='pdf'):
         linestyle='--',
         linewidth=1,
     )
-    plt.xlim(85, 93)
+    plt.xlim(86, 92)
+    plt.ylim(0,90)
     plt.xlabel('HST volumetric efficiency, %')
     plt.legend(loc='upper right', fontsize='x-small')
     if save_figure:
