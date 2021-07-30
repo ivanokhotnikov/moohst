@@ -554,11 +554,11 @@ def plot_validation(show_figure=False, save_figure=False, format='pdf'):
         inplace=True)
     data['Reverse Speed'] = data['Reverse Speed'].astype(np.float64)
     data['Volumetric at 1780RPM'] = data['Volumetric at 1780RPM'].map(
-    lambda x: float(x[:-1]))
+        lambda x: float(x[:-1]))
     data.loc[data['Reverse Speed'] == 568.0, 'Reverse Speed'] = 1568.0
     data.loc[data['Volumetric at 1780RPM'] == 60.1,
-         'Volumetric at 1780RPM'] = round(
-            (1571 / 1780 + 1568 / 1780) / 2 * 100, ndigits=1)
+             'Volumetric at 1780RPM'] = round(
+                 (1571 / 1780 + 1568 / 1780) / 2 * 100, ndigits=1)
     speeds = data[['Forward Speed', 'Reverse Speed']].astype(float)
     speeds = speeds.stack()
     vol_eff = speeds / 1780 * 1e2
@@ -653,7 +653,7 @@ def plot_validation(show_figure=False, save_figure=False, format='pdf'):
         linewidth=1,
     )
     plt.xlim(86, 92)
-    plt.ylim(0,90)
+    plt.ylim(0, 90)
     plt.xlabel('HST volumetric efficiency, %')
     plt.legend(loc='upper right', fontsize='x-small')
     if save_figure:
@@ -968,6 +968,36 @@ def plot_engines_comparison(hst1,
         fig_comparison.show()
 
 
+def eff_temp(hst, show_figure=True, save_figure=False, format='pdf'):
+    from scipy.interpolate import interp1d
+    effs = []
+    hst.oil = 'SAE 15W40'
+    temps = range(0, 110, 10)
+    for temp in temps:
+        hst.oil_temp = temp
+        hst.load_oil()
+        eff, perf = hst.compute_eff(speed_pump=2025, pressure_discharge=472)
+        effs.append(eff['hst']['total'])
+    sns.set_style('ticks', {
+        'spines.linewidth': .25,
+    })
+    sns.set_palette('Set1')
+    plt.scatter(temps, effs, c='steelblue')
+    f2 = interp1d(temps, effs, kind='cubic')
+    x = np.linspace(0, 100)
+    sns.despine()
+    plt.plot(x, f2(x), color='steelblue')
+    plt.legend(['Interpolation', 'Data'], loc='best')
+    plt.xlabel('Oil temperature, deg C')
+    plt.ylabel('HSU total efficiency, %')
+    if save_figure:
+        if not os.path.exists('images'):
+            os.mkdir('images')
+        plt.savefig(f'images/eff_temp.{format}')
+    if show_figure:
+        plt.show()
+
+
 def print_to_moohst(show=True, save=False):
     if show:
         shows = True
@@ -1021,6 +1051,7 @@ def print_to_moohst(show=True, save=False):
         show_figure=shows,
         save_figure=saves,
     )
+    eff_temp(hst, save_figure=save, show_figure=show)
     #* Comparisons
     # engine_1 = HST(440, engine='engine_1')
     # engine_4 = HST(350,
